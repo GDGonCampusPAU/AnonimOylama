@@ -1,32 +1,90 @@
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
+# === Go (Backend) ===
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Test binary, built with `go test -c`
 *.test
-
-# Code coverage profiles and other test artifacts
 *.out
-coverage.*
-*.coverprofile
-profile.cov
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
+coverage.txt
+coverage.html
 go.work
 go.work.sum
+vendor/
+bin/
 
-# env file
+# === Next.js / Node.js (Frontend) ===
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Next.js build çıktıları
+.next/
+out/
+build/
+dist/
+
+# Production
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing
+coverage/
+
+# === Ortam Değişkenleri ===
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
 
-# Editor/IDE
-# .idea/
-# .vscode/
+# === IDE & Editör ===
+# JetBrains 
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# === İşletim Sistemi ===
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# === Log ve Geçici ===
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+tmp/
+temp/
+
+# === Database ===
+*.db
+*.sqlite
+*.sqlite3
+
+# === Deployment ===
+.vercel
+.netlify
+
+# === Figma export'ları (gerekirse) ===
+# Tasarım dosyaları repoya girmez, sadece export edilen asset'ler girer
