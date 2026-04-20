@@ -3,32 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { getElectionByInviteCode } from '../api';
 import { VALIDATION, ERROR_MESSAGES } from '../config';
 
-/**
- * HomePage - Premium GDG on Campus Ana Sayfası
- * 
- * Modern, Apple/Stripe estetikli tasarım
- * İki premium widget ile iki aksiyon:
- * 1. Yeni seçim oluştur
- * 2. Davet koduyla mevcut seçime katıl
- */
 export default function HomePage() {
   const navigate = useNavigate();
 
   const [isCreatingElection, setIsCreatingElection] = useState(false);
-  const [createError, setCreateError] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
 
-const handleCreateElection = async () => {
-    setCreateError('');
+  const handleCreateElection = async () => {
     setIsCreatingElection(true);
-
-    // Navigate to create election form page
     setTimeout(() => {
       navigate('/create');
       setIsCreatingElection(false);
-    }, 1000); // Brief loading delay for UX
+    }, 800);
   };
 
   const handleJoinElection = async (e: React.FormEvent) => {
@@ -36,24 +24,21 @@ const handleCreateElection = async () => {
     setJoinError('');
 
     if (!inviteCode.trim()) {
-      setJoinError('Davet kodunu girin');
+      setJoinError('Oda kodunu girin');
       return;
     }
 
     const cleanedCode = inviteCode.toUpperCase().trim();
-
     if (!VALIDATION.INVITE_CODE_REGEX.test(cleanedCode)) {
-      setJoinError('Geçersiz davet kodu formatı');
+      setJoinError('Geçersiz oda kodu');
       return;
     }
 
     setIsJoining(true);
-
     try {
       const result = await getElectionByInviteCode(cleanedCode);
-
       if (result.success && result.data) {
-        navigate(`/election/${cleanedCode}`);
+        navigate(`/verify/${cleanedCode}`);
       } else {
         setJoinError(result.error || ERROR_MESSAGES.ELECTION_NOT_FOUND);
       }
@@ -65,141 +50,87 @@ const handleCreateElection = async () => {
   };
 
   return (
-    // Ultra-minimal, pristine background
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-12">
-      
-      {/* Content Container */}
-      <div className="w-full max-w-6xl">
-        
-        {/* Header Section */}
-        <div className="text-center mb-16">
-          {/* Main Title */}
-          <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight text-slate-950 mb-4">
-            GDG on Campus
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8 transition-colors duration-500">
+      <div className="w-full max-w-4xl">
+        {/* Minimal Header */}
+        <header className="mb-20 text-center">
+          <h1 className="text-4xl font-light tracking-tight text-slate-900 mb-3">
+            GDG on Campus <span className="font-semibold text-indigo-600">Voting</span>
           </h1>
+          <p className="text-slate-400 font-medium">Birlikte, özgürce ve anonim olarak karar verin.</p>
+        </header>
+
+        {/* Minimal Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
           
-          {/* Subtitle */}
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Kampüs topluluğunuzda fikirlerinizi anonim olarak paylaşın
-          </p>
-        </div>
-
-        {/* Premium Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          
-          {/* Card 1: Create Election - Premium Widget */}
-          <div className="group relative bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-300/50">
-            
-            {/* Icon Area */}
-            <div className="w-full h-32 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl flex items-center justify-center mb-6 border border-slate-100 group-hover:border-slate-200 transition-colors">
-              <div className="text-5xl">✨</div>
-            </div>
-
-            {/* Content */}
-            <h2 className="text-2xl font-semibold text-slate-950 mb-2">
-              Seçim Oluştur
-            </h2>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              Yeni bir seçim başlatın ve katılımcıları davet edin
-            </p>
-
-            {/* Button */}
-            <button
-              onClick={handleCreateElection}
-              disabled={isCreatingElection}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-indigo-600/30 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              {isCreatingElection ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Oluşturuluyor...</span>
-                </>
-              ) : (
-                <span>Seçim Oluştur</span>
-              )}
-            </button>
-
-            {/* Error Message */}
-            {createError && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700 font-medium">{createError}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Card 2: Join Election - Premium Widget */}
-          <div className="group relative bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-300/50">
-            
-            {/* Icon Area */}
-            <div className="w-full h-32 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl flex items-center justify-center mb-6 border border-slate-100 group-hover:border-slate-200 transition-colors">
-              <div className="text-5xl">🔑</div>
-            </div>
-
-            {/* Content */}
-            <h2 className="text-2xl font-semibold text-slate-950 mb-2">
-              Seçime Katıl
-            </h2>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              Davet kodu ile mevcut seçime katılın
-            </p>
-
-            {/* Form */}
-            <form onSubmit={handleJoinElection} className="space-y-3">
-              {/* Input */}
-              <input
-                type="text"
-                value={inviteCode}
-                onChange={(e) => {
-                  setInviteCode(e.target.value.toUpperCase());
-                  setJoinError('');
-                }}
-                placeholder="Davet Kodu"
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 placeholder-slate-400 font-mono text-center tracking-widest transition-all duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 hover:border-slate-400"
-                maxLength={VALIDATION.INVITE_CODE_LENGTH}
-                disabled={isJoining}
-              />
-
-              {/* Button */}
+          {/* Action 1: Create */}
+          <section className="flex flex-col">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">Yönetim</h2>
+            <div className="flex-1 border-l border-slate-100 pl-8 py-2 transition-colors">
+              <h3 className="text-2xl font-semibold text-slate-900 mb-2">Seçim Başlat</h3>
+              <p className="text-slate-500 mb-8 text-sm leading-relaxed max-w-xs">
+                Yeni bir oylama odası oluşturun ve ekibinizi davet edin. Tüm süreç uçtan uca şifrelidir.
+              </p>
               <button
-                type="submit"
-                disabled={!inviteCode.trim() || isJoining}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-600/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                onClick={handleCreateElection}
+                disabled={isCreatingElection}
+                className="group flex items-center gap-3 text-indigo-600 font-bold hover:gap-5 transition-all text-sm"
               >
-                {isJoining ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Katılınıyor...</span>
-                  </>
-                ) : (
-                  <span>Katıl</span>
-                )}
+                <span>{isCreatingElection ? 'Hazırlanıyor...' : 'Yeni Seçim Oluştur'}</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
               </button>
-            </form>
+            </div>
+          </section>
 
-            {/* Error Message */}
-            {joinError && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700 font-medium">{joinError}</p>
-              </div>
-            )}
+          {/* Action 2: Join */}
+          <section className="flex flex-col">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">Katılım</h2>
+            <div className="flex-1 border-l border-slate-100 pl-8 py-2 transition-colors">
+              <h3 className="text-2xl font-semibold text-slate-900 mb-2">Odaya Katıl</h3>
+              <p className="text-slate-500 mb-8 text-sm leading-relaxed max-w-xs">
+                Size gönderilen oda kodunu kullanarak aktif bir seçime katılın ve oyunuzu kullanın.
+              </p>
+              
+              <form onSubmit={handleJoinElection} className="relative max-w-xs">
+                <input
+                  type="text"
+                  value={inviteCode}
+                  onChange={(e) => {
+                    setInviteCode(e.target.value.toUpperCase());
+                    setJoinError('');
+                  }}
+                  placeholder="ODA KODU"
+                  className="w-full bg-slate-50 border-none px-4 py-3 rounded-xl text-sm font-bold tracking-widest text-slate-900 placeholder-slate-300 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                  maxLength={VALIDATION.INVITE_CODE_LENGTH}
+                  disabled={isJoining}
+                />
+                <button
+                  type="submit"
+                  disabled={!inviteCode.trim() || isJoining}
+                  className="absolute right-2 top-2 p-1.5 text-indigo-600 hover:scale-110 transition-all disabled:opacity-30 disabled:scale-100"
+                >
+                  {isJoining ? (
+                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                  )}
+                </button>
+              </form>
+              
+              {joinError && <p className="mt-4 text-red-500 text-xs font-bold">{joinError}</p>}
+            </div>
+          </section>
+
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-32 pt-8 border-t border-slate-50 flex items-center justify-between">
+          <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">© 2026 GDG on Campus</p>
+          <div className="flex gap-6">
+            <span className="text-[10px] text-slate-400 font-medium">Uçtan Uca Şifreleme Etkin</span>
+            <span className="text-[10px] text-slate-400 font-medium">Gizlilik Odaklı</span>
           </div>
-
-        </div>
-
-        {/* Footer Trust Signal */}
-        <div className="text-center">
-          <p className="text-xs text-slate-500 flex items-center justify-center gap-2">
-            <span>🔒</span>
-            <span>Tüm veriler end-to-end şifreli ve tamamen anonim</span>
-          </p>
-        </div>
-
+        </footer>
       </div>
     </div>
   );

@@ -29,8 +29,8 @@ export const AUTH_CONFIG = {
 
 export const VALIDATION = {
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  INVITE_CODE_LENGTH: 6,
-  INVITE_CODE_REGEX: /^[A-Z0-9]{6}$/,
+  INVITE_CODE_LENGTH: 12,
+  INVITE_CODE_REGEX: /^[A-Z0-9-]{4,12}$/,
   PASSWORD_MIN_LENGTH: 8,
   ELECTION_TITLE_MAX: 200,
   ELECTION_DESCRIPTION_MAX: 1000,
@@ -123,5 +123,5 @@ export const ROUTES = {
 export const MOCK_API = {
   DELAY_MS: 1000, // Mock API gecikme süresi
   VOTE_DELAY_MS: 1500, // Oylama için özel gecikme
-  DUPLICATE_VOTE_CHANCE: 0.3, // Çift oylama simülasyonu ihtimali (30%)
+  DUPLICATE_VOTE_CHANCE: 0.0, // Çift oylama simülasyonu ihtimali (test kolaylığı için sıfırlandı)
 } as const;

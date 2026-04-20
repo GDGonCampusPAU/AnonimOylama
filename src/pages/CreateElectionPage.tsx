@@ -1,65 +1,49 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const CONFIG = {
-  MIN_CANDIDATES: 2,
-  MAX_CANDIDATES: 10,
-  MAX_VOTERS: 50,
-};
 
 export default function CreateElectionPage() {
   const navigate = useNavigate();
+  const [voterEmails, setVoterEmails] = useState<string[]>(['']);
+  const [candidates, setCandidates] = useState<string[]>(['', '']);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [candidates, setCandidates] = useState(['', '']);
-  const [voterEmails, setVoterEmails] = useState<string[]>(['']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-
-  const handleAddEmail = () => {
-    if (voterEmails.length < CONFIG.MAX_VOTERS) setVoterEmails([...voterEmails, '']);
-  };
-
-  const handleCandidateChange = (index: number, value: string) => {
-    const newCandidates = [...candidates];
-    newCandidates[index] = value;
-    setCandidates(newCandidates);
-  };
-
-  const handleEmailChange = (index: number, value: string) => {
-    const newEmails = [...voterEmails];
-    newEmails[index] = value;
-    setVoterEmails(newEmails);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Mock API simülasyonu
+    const mockCodes = voterEmails.map(() => `${Math.floor(1000 + Math.random() * 9000)}`);
+    const lastCode = mockCodes[mockCodes.length - 1];
+    
+    console.group('🛠️ DEVELOPMENT MODE: Seçim Doğrulama Kodları');
+    voterEmails.forEach((email, index) => {
+      console.log(`📧 Alıcı: ${email} | 🔢 Doğrulama Kodu: ${mockCodes[index]} | 🔗 Oda: TEST-INVITE`);
+    });
+    console.groupEnd();
+
+    localStorage.setItem('last_dev_code', lastCode);
+
     setTimeout(() => {
       setSuccess(true);
       setIsSubmitting(false);
-    }, 2000);
+    }, 1500);
   };
 
   if (success) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/60 p-12 text-center border border-slate-100">
-          <div className="w-24 h-24 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl">
-            ✨
-          </div>
-          <h2 className="text-3xl font-black text-slate-900 mb-4">Seçim Başlatıldı!</h2>
-          <p className="text-slate-500 mb-10 leading-relaxed font-medium">
-            Seçmen listesindeki <b>{voterEmails.length}</b> kişiye özel erişim kodları e-posta ile gönderildi. 
-            Sistem artık oyları kabul etmeye hazır.
+      <div className="min-h-screen bg-white flex items-center justify-center p-8 transition-colors duration-500">
+        <div className="max-w-md w-full text-center">
+          <h2 className="text-3xl font-light text-slate-900 mb-4">Seçim Odası Hazır</h2>
+          <p className="text-slate-400 font-medium mb-12 leading-relaxed">
+            Katılımcıların e-posta adreslerine doğrulama kodları gönderildi.
           </p>
           <button 
             onClick={() => navigate('/')} 
-            className="w-full bg-indigo-600 text-white font-bold py-5 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-[0.98]"
+            className="text-indigo-600 font-bold hover:tracking-widest transition-all uppercase text-xs tracking-wider"
           >
-            Ana Panele Dön
+            Ana Sayfaya Dön →
           </button>
         </div>
       </div>
@@ -67,123 +51,108 @@ export default function CreateElectionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-16 px-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-12">
-          <h1 className="text-4xl font-black text-slate-900 mb-3">Yeni Seçim Oluştur</h1>
-          <p className="text-slate-500 text-lg font-medium">Güvenli, anonim ve tamamen kapalı devre oylama sistemi.</p>
-        </div>
+    <div className="min-h-screen bg-white py-20 px-8 transition-colors duration-500">
+      <div className="max-w-4xl mx-auto">
+        <header className="mb-20">
+          <button onClick={() => navigate(-1)} className="text-slate-300 hover:text-slate-900 transition-colors mb-8 flex items-center gap-2 group">
+            <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            <span className="text-xs font-bold uppercase tracking-widest">Geri</span>
+          </button>
+          <h1 className="text-4xl font-light text-slate-900">Seçim Detayları</h1>
+          <p className="text-slate-400 font-medium mt-2">Yeni bir oylama odası kurun.</p>
+        </header>
 
-        <form onSubmit={handleSubmit} className="space-y-10">
-          {/* Ana Bilgiler Kartı */}
-          <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 p-10 border border-slate-100">
-            <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center">
-              <span className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mr-3 text-sm">1</span>
-              Genel Bilgiler
-            </h2>
-            <div className="grid gap-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Seçim Başlığı</label>
-                <input 
-                  type="text" required placeholder="Örn: GDG on Campus Temsilci Seçimi" 
-                  className="w-full px-8 py-5 bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl transition-all text-lg font-semibold text-slate-900 outline-none"
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-24">
+          {/* Sol Kolon: Bilgiler */}
+          <div className="space-y-12">
+            <section>
+              <label className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 block">Genel Bilgiler</label>
+              <div className="space-y-6">
+                <input
+                  type="text"
+                  placeholder="Seçim Başlığı"
+                  value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Açıklama ve Kurallar</label>
-                <textarea 
+                  className="w-full border-b border-slate-100 bg-transparent py-3 text-xl font-medium focus:border-indigo-500 text-slate-900 outline-none transition-colors placeholder-slate-200"
                   required
-                  placeholder="Seçmenlerin bilmesi gereken detayları buraya yazın..." 
-                  className="w-full px-8 py-5 bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl transition-all min-h-[120px] text-slate-700 outline-none"
+                />
+                <textarea
+                  placeholder="Açıklama (Opsiyonel)"
+                  value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  className="w-full border-b border-slate-100 bg-transparent py-3 text-sm focus:border-indigo-500 text-slate-900 outline-none transition-colors placeholder-slate-200 min-h-[100px] resize-none"
                 />
               </div>
-            </div>
-          </div>
+            </section>
 
-          {/* Adaylar ve Seçmenler Yan Yana */}
-          <div className="grid lg:grid-cols-2 gap-10">
-            {/* Aday Listesi */}
-            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 p-10 border border-slate-100">
-              <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center">
-                <span className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mr-3 text-sm">2</span>
-                Adaylar
-              </h2>
-              <div className="space-y-4">
-                {candidates.map((c, i) => (
-                  <div key={i} className="relative group">
-                    <input 
-                      required 
-                      placeholder={`Aday ${i+1}`} 
-                      value={c}
-                      onChange={(e) => handleCandidateChange(i, e.target.value)}
-                      className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-xl transition-all font-medium text-slate-900 outline-none" 
-                    />
-                  </div>
-                ))}
-                
-                {candidates.length < CONFIG.MAX_CANDIDATES && (
-                  <button 
-                    type="button" 
-                    onClick={() => setCandidates([...candidates, ''])} 
-                    className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>+</span> Aday Ekle
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Seçmen Listesi */}
-            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 p-10 border border-slate-100">
-              <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center">
-                <span className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mr-3 text-sm">3</span>
-                Seçmen Listesi
-              </h2>
-              <div className="space-y-4">
-                {voterEmails.map((email, i) => (
-                  <input 
-                    key={i} type="email" required placeholder="seçmen@email.com" 
-                    value={email}
-                    className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-xl transition-all font-medium text-slate-900 outline-none"
-                    onChange={(e) => handleEmailChange(i, e.target.value)}
+            <section>
+              <label className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 block">Adaylar</label>
+              <div className="space-y-3">
+                {candidates.map((candidate, idx) => (
+                  <input
+                    key={idx}
+                    type="text"
+                    value={candidate}
+                    onChange={(e) => {
+                      const newCands = [...candidates];
+                      newCands[idx] = e.target.value;
+                      setCandidates(newCands);
+                    }}
+                    placeholder={`Aday ${idx + 1}`}
+                    className="w-full border-b border-slate-100 bg-transparent py-2 text-sm focus:border-indigo-500 text-slate-900 outline-none transition-colors placeholder-slate-200"
+                    required
                   />
                 ))}
-                
-                {voterEmails.length < CONFIG.MAX_VOTERS && (
-                  <button 
-                    type="button" 
-                    onClick={handleAddEmail} 
-                    className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>+</span> Seçmen Ekle
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setCandidates([...candidates, ''])}
+                  className="text-xs font-bold text-indigo-400 hover:text-indigo-600 transition-colors mt-2"
+                >
+                  + Aday Ekle
+                </button>
               </div>
-            </div>
+            </section>
           </div>
 
-          {/* Form Aksiyonları */}
-          <div className="flex flex-col items-center pt-6">
-            <button 
-              type="submit" disabled={isSubmitting}
-              className="w-full max-w-md bg-indigo-600 text-white font-black py-6 rounded-3xl hover:bg-indigo-700 disabled:bg-slate-200 transition-all shadow-2xl shadow-indigo-200/50 text-xl active:scale-[0.98]"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center justify-center gap-3">
-                  <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Yükleniyor...
-                </span>
-              ) : 'Seçimi Başlat ve E-postaları Gönder'}
-            </button>
-            <p className="mt-6 text-slate-400 font-medium flex items-center gap-2">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>
-              Tüm veriler uçtan uca şifrelenir ve anonim kalır.
-            </p>
+          {/* Sağ Kolon: Seçmen Listesi */}
+          <div className="flex flex-col h-full">
+            <section className="flex-1">
+              <label className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 block">Seçmen Listesi</label>
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-4 scrollbar-hide">
+                {voterEmails.map((email, idx) => (
+                  <input
+                    key={idx}
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      const newEmails = [...voterEmails];
+                      newEmails[idx] = e.target.value;
+                      setVoterEmails(newEmails);
+                    }}
+                    placeholder={`ornek@universite.edu.tr`}
+                    className="w-full border-b border-slate-100 bg-transparent py-2 text-sm focus:border-indigo-500 text-slate-900 outline-none transition-colors placeholder-slate-200"
+                    required
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setVoterEmails([...voterEmails, ''])}
+                className="text-xs font-bold text-indigo-400 hover:text-indigo-600 transition-colors mt-4"
+              >
+                + Seçmen Ekle
+              </button>
+            </section>
+
+            <div className="mt-12">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all disabled:bg-slate-200 disabled:text-slate-400 text-sm tracking-widest uppercase shadow-xl shadow-slate-200/50"
+              >
+                {isSubmitting ? 'Oluşturuluyor...' : 'Seçimi Başlat'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

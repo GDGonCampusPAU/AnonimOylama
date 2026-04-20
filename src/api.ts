@@ -5,8 +5,26 @@
  */
 
 // Mock veriler için in-memory storage
-const mockElections: any[] = [];
-const mockCandidates: any[] = [];
+const testElectionId = 'test-election-123';
+const mockElections: any[] = [
+  {
+    id: testElectionId,
+    creatorId: 'user-1',
+    title: 'GDG on Campus Demo Seçimi',
+    description: 'Bu bir test seçimidir. Geliştirme modunda bu kodu kullanarak sistemi test edebilirsiniz.',
+    inviteCode: 'TEST-INVITE',
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'Active',
+    totalVotes: 0
+  }
+];
+
+const mockCandidates: any[] = [
+  { id: 'cand-1', electionId: testElectionId, name: 'Aday Ahmet', voteCount: 5 },
+  { id: 'cand-2', electionId: testElectionId, name: 'Aday Ayşe', voteCount: 3 },
+  { id: 'cand-3', electionId: testElectionId, name: 'Aday Mehmet', voteCount: 2 }
+];
 
 // Mock yardımcı fonksiyonları
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -305,7 +323,7 @@ export const voteForCandidate = async (
  * Seçim sonuçlarını getir - MOCK
  */
 export const getElectionResults = async (
-  electionId: string
+  electionIdOrCode: string
 ): Promise<ApiResponse<{
   election: ElectionResponse;
   candidates: Candidate[];
@@ -313,13 +331,13 @@ export const getElectionResults = async (
 }>> => {
   await mockDelay();
 
-  const election = mockElections.find(e => e.id === electionId);
+  const election = mockElections.find(e => e.id === electionIdOrCode || e.inviteCode === electionIdOrCode);
 
   if (!election) {
     return mockApiResponse(undefined as any, false, ERROR_MESSAGES.ELECTION_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
-  const candidates = mockCandidates.filter(c => c.electionId === electionId);
+  const candidates = mockCandidates.filter(c => c.electionId === election.id);
   const totalVotes = candidates.reduce((sum, c) => sum + c.voteCount, 0);
 
   return mockApiResponse({
