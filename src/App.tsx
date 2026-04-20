@@ -1,14 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import ElectionPage from './pages/ElectionPage';
+import VotePage from './pages/VotePage';
+import CreateElectionPage from './pages/CreateElectionPage';
+import VerifyInvitationPage from './pages/VerifyInvitationPage';
 import { ROUTES } from './config';
 
 /**
  * Ana uygulama routing yapısı
- * 
- * ROUTES:
- * - "/" : Ana sayfa (seçim oluştur/katıl)
- * - "/election/:inviteCode" : Seçim sayfası (anonim oylama)
  */
 export default function App() {
   return (
@@ -16,12 +15,12 @@ export default function App() {
       <Routes>
         {/* Ana Sayfa - Seçim Oluşturma & Davet Koduyla Katılma */}
         <Route path={ROUTES.HOME} element={<HomePage />} />
-
-        {/* Seçim Sayfası - Davet Koduyla Erişim */}
-        <Route 
-          path="/election/:inviteCode" 
-          element={<ElectionPage />} 
-        />
+        <Route path="/create" element={<CreateElectionPage />} />
+        
+        {/* Doğrulama ve Oylama Rotaları */}
+        <Route path="/verify/:inviteCode" element={<VerifyInvitationPage />} />
+        <Route path="/vote/:inviteCode" element={<VotePage />} />
+        <Route path="/election/:inviteCode" element={<ElectionPage />} />
 
         {/* Wildcard - Bulunamayan sayfalar ana sayfaya yönlendir */}
         <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />

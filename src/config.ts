@@ -117,11 +117,11 @@ export const ROUTES = {
 } as const;
 
 // ========================================
-// TIME FORMATTING
+// MOCK API SETTINGS
 // ========================================
 
-export const TIME_CONFIG = {
-  DATE_FORMAT: 'dd/MM/yyyy',
-  DATETIME_FORMAT: 'dd/MM/yyyy HH:mm',
-  LOCALE: 'tr-TR',
+export const MOCK_API = {
+  DELAY_MS: 1000, // Mock API gecikme süresi
+  VOTE_DELAY_MS: 1500, // Oylama için özel gecikme
+  DUPLICATE_VOTE_CHANCE: 0.3, // Çift oylama simülasyonu ihtimali (30%)
 } as const;
