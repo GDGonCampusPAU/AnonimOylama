@@ -3,10 +3,10 @@
 Bu doküman, Anonim Oylama Sistemi backend projesinin uçtan uca geliştirme adımlarını içerir. **AI Ajanı İçin Not:** Geliştirme yaparken bu plandaki sıraya kesinlikle uymalısın. Herhangi bir göreve başlamadan önce `state.md` dosyasını kontrol et ve güncel duruma göre hareket et.
 
 ## 🟢 Phase 1: Temel Kurulum ve Altyapı
-- [ ] 1.1. Go projesinin başlatılması (`go mod init`).
-- [ ] 1.2. `docs/project-structure.md` standartlarına göre klasör ağacının oluşturulması.
-- [ ] 1.3. `.env` dosyasının ve `internal/config` yapılandırmasının kurulması.
-- [ ] 1.4. PostgreSQL veritabanı bağlantısının (`database/sql` veya `sqlc`) kurulması.
+- [x] 1.1. Go projesinin başlatılması (`go mod init`).
+- [x] 1.2. `docs/project-structure.md` standartlarına göre klasör ağacının oluşturulması.
+- [x] 1.3. `.env` dosyasının ve `internal/config` yapılandırmasının kurulması.
+- [x] 1.4. PostgreSQL veritabanı bağlantısının (`database/sql` veya `sqlc`) kurulması.
 
 ## 🟡 Phase 2: Kullanıcı ve Yetkilendirme (Auth)
 - [ ] 2.1. `Users` ve `Roles` veri modellerinin (struct) oluşturulması.
