@@ -1,34 +1,30 @@
 # Proje Anlık Durumu (State)
 
-**AI Ajanı İçin Not:** Herhangi bir kod yazmadan önce ve bir görevi tamamladıktan sonra BU DOSYAYI GÜNCELLE. Bu dosya, projede nerede olduğumuzu, nelerin bittiğini ve nelerde sorun yaşadığımızı gösterir.
+## 📍 Mevcut Durum
+* **Aktif Faz:** Phase 2 ✅ TAMAMLANDI — Phase 3'e geçiş bekleniyor
+* **Son Güncelleme:** 2026-04-30 15:38
 
-## 📍 Mevcut Durum (Current Status)
-* **Aktif Faz:** Phase 1 ✅ TAMAMLANDI — Phase 2'ye geçiş bekleniyor
-* **Aktif Görev:** Phase 1 tamamlandı. Sıradaki: 2.1. Users ve Roles veri modellerinin oluşturulması
-* **Son Güncelleme:** 2026-04-30 15:05
+## ✅ Tamamlananlar
+* [x] Phase 1: Temel kurulum, Docker, migration, /health endpoint
+* [x] 2.1. `internal/models/user.go` — User, Role, UserWithRoles
+* [x] 2.2. `internal/repository/user_repository.go` — GetByEmail, GetRolesByUserID
+* [x] 2.3. `internal/service/auth_service.go` — bcrypt + JWT (HS256, 24h)
+* [x] 2.4. `internal/handlers/auth_handler.go` — POST /api/v1/auth/login
+* [x] 2.5. `internal/middleware/auth.go` — Bearer token + context injection
 
-## ✅ Tamamlananlar (Completed)
-* [x] 1.1. Go projesinin başlatılması (`go mod init github.com/GDGonCampusPAU/AnonimOylama/backend`)
-* [x] 1.2. Klasör mimarisinin `project-structure.md` standartlarına göre kurulması
-* [x] 1.3. `.env` dosyası, `.env.example`, `internal/config/config.go` yapılandırması
-* [x] 1.4. PostgreSQL bağlantısı (`database/sql` + `lib/pq`), Docker Compose, `golang-migrate` ile migration
+## 🧪 Test Sonuçları
+| Test | HTTP | Sonuç |
+|---|---|---|
+| Geçerli giriş | 200 + JWT | ✅ |
+| Yanlış şifre | 401 | ✅ |
+| Onaysız hesap | 403 | ✅ |
+| Eksik alan | 400 | ✅ |
 
-## 🏗️ Kurulan Altyapı Detayları
-* **Docker:** `docker-compose.yml` ile PostgreSQL 16 Alpine (container: `anonim_oylama_db`)
-* **Migration:** `golang-migrate` CLI, `sql/migrations/001_init.up.sql` ile 6 tablo oluşturuldu
-* **Tablolar:** `users`, `roles`, `user_roles`, `elections`, `candidates`, `election_voters`
-* **Varsayılan Roller:** `Admin`, `User` (seed data olarak migration'da eklendi)
-* **Standart Response:** `pkg/response/response.go` — `{success, data, message}` formatı
-* **Health Check:** `GET /health` endpoint'i aktif ve test edildi
-* **Go Bağımlılıkları:** `godotenv v1.5.1`, `lib/pq v1.12.3`
+## ⏳ Sırada Bekleyenler
+* [ ] 3.1. Elections ve Candidates modelleri
+* [ ] 3.2. inviteCode servisi
+* [ ] 3.3. SMTP mailer altyapısı
 
-## 🚧 Üzerinde Çalışılanlar (In Progress)
-*(Şu an aktif çalışma yok — Phase 2 onayı bekleniyor)*
-
-## ⏳ Sırada Bekleyenler (Next Up)
-* [ ] 2.1. `Users` ve `Roles` veri modellerinin (struct) oluşturulması
-* [ ] 2.2. Veritabanı katmanında (Repository) kullanıcı sorgularının yazılması
-
-## ⚠️ Karşılaşılan Sorunlar / Notlar (Blockers & Notes)
-* `golang-migrate` CLI, `go install` ile kuruldu ancak PowerShell PATH'inde değil. Tam yol kullanılması gerekiyor: `$env:USERPROFILE\go\bin\migrate.exe`
-* Türkçe karakterler `Invoke-RestMethod` çıktısında bozuk görünüyor (encoding sorunu, API kendisi doğru çalışıyor)
+## ⚠️ Notlar
+* `migrate` CLI: `$env:USERPROFILE\go\bin\migrate.exe`
+* Test seed: `sql/seed_test_users.sql`

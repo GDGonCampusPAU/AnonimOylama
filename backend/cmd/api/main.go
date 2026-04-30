@@ -1,13 +1,5 @@
-// Package main, Anonim Oylama Sistemi backend uygulamasının giriş noktasıdır.
-//
-// Bu dosya SADECE aşağıdaki görevlerden sorumludur:
-//  1. Yapılandırmayı (Config) yüklemek
-//  2. Veritabanı bağlantısını kurmak
-//  3. HTTP Router'ı oluşturup handler'ları kaydetmek
-//  4. Sunucuyu başlatmak
-//
-// ÖNEMLİ: Bu dosyaya iş mantığı, veritabanı sorguları veya
-// karmaşık işlemler kesinlikle yazılmamalıdır.
+// Package main, uygulamanın giriş noktasıdır.
+// SADECE bağımlılık bağlama ve sunucu başlatmadan sorumludur.
 package main
 
 import (
@@ -16,44 +8,37 @@ import (
 
 	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/config"
 	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/handlers"
+	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/middleware"
+	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/repository"
+	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/service"
 )
 
 func main() {
-	// ====================================
-	// 1. Yapılandırmayı Yükle
-	// ====================================
-	// .env dosyasından ortam değişkenlerini oku ve Config struct'ına dönüştür.
 	cfg := config.Load()
 
-	// ====================================
-	// 2. Veritabanı Bağlantısını Kur
-	// ====================================
-	// PostgreSQL'e bağlan. Bağlantı kurulamazsa uygulama başlamaz.
 	db, err := config.Connect(cfg)
 	if err != nil {
 		log.Fatalf("❌ Veritabanı bağlantısı kurulamadı: %v", err)
 	}
-	// main() fonksiyonu bittiğinde (uygulama kapandığında) bağlantıyı kapat.
-	// defer anahtar kelimesi, fonksiyon sonunda bu satırın çalışmasını garanti eder.
 	defer db.Close()
 
-	// ====================================
-	// 3. Router Oluştur ve Handler'ları Kaydet
-	// ====================================
-	// Go 1.22+ ile gelen gelişmiş ServeMux, HTTP metodu eşleştirmesini destekler.
-	// "GET /health" yazımı sayesinde sadece GET istekleri bu handler'a yönlendirilir.
+	// Dependency Injection: *sql.DB → Repository → Service → Handler
+	userRepo := repository.NewUserRepository(db)
+	authService := service.NewAuthService(userRepo, cfg.JWTSecret)
+	authHandler := handlers.NewAuthHandler(authService)
+
 	mux := http.NewServeMux()
 
-	// Health Check — Sunucu ve veritabanı sağlık kontrolü
+	// Public endpoints
 	mux.HandleFunc("GET /health", handlers.HealthCheck(db))
+	mux.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
 
-	// ====================================
-	// 4. Sunucuyu Başlat
-	// ====================================
-	addr := ":" + cfg.ServerPort
+	// Protected endpoint örneği (Phase 3'te kullanılacak):
+	// mux.HandleFunc("GET /api/v1/elections", middleware.Auth(authService)(electionHandler.List))
+	_ = middleware.Auth
+
 	log.Printf("🚀 Anonim Oylama API sunucusu %s portunda başlatılıyor...", cfg.ServerPort)
-
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(":"+cfg.ServerPort, mux); err != nil {
 		log.Fatalf("❌ Sunucu başlatılamadı: %v", err)
 	}
 }
