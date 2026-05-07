@@ -25,6 +25,12 @@ type Config struct {
 	DBSSLMode  string // SSL modu (Örn: "disable", "require")
 
 	JWTSecret string // JWT token imzalamak için kullanılan gizli anahtar
+
+	SMTPHost     string // SMTP sunucu adresi (Örn: "smtp.gmail.com")
+	SMTPPort     string // SMTP port numarası (Örn: "587")
+	SMTPUser     string // SMTP kimlik doğrulama kullanıcı adı
+	SMTPPassword string // SMTP kimlik doğrulama şifresi
+	SMTPFrom     string // Gönderici e-posta adresi (Örn: "noreply@anonimoylama.com")
 }
 
 // Load, .env dosyasını okuyarak Config struct'ını oluşturur ve döndürür.
@@ -48,6 +54,12 @@ func Load() *Config {
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
 
 		JWTSecret: getEnv("JWT_SECRET", ""),
+
+		SMTPHost:     getEnv("SMTP_HOST", "smtp.gmail.com"),
+		SMTPPort:     getEnv("SMTP_PORT", "587"),
+		SMTPUser:     getEnv("SMTP_USER", ""),
+		SMTPPassword: getEnv("SMTP_PASSWORD", ""),
+		SMTPFrom:     getEnv("SMTP_FROM", ""),
 	}
 
 	return cfg

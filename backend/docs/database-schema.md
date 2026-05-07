@@ -49,6 +49,15 @@ Hangi kullanıcının hangi seçimde oy kullandığını denetler. **Mükerrer o
 * `userId` (FK, UUID): Oy kullanan kullanıcının (`Users`) kimliği.
 * `votedAt` (DateTime): Oy kullanma zamanı.
 
+### 7. ElectionInvitees (Davet Listesi - Whitelist)
+Bir seçime hangi e-posta adreslerinin davet edildiğini tutar. **Odaya erişim kontrolü için kullanılır.**
+* `Id` (PK, UUID): Benzersiz kayıt kimliği.
+* `electionId` (FK, UUID): `Elections` tablosuna referans.
+* `email` (String): Davet edilen kişinin e-posta adresi.
+* `invitedAt` (DateTime): Davet edilme zamanı.
+* **UNIQUE constraint:** `(electionId, email)` — Aynı kişi aynı seçime iki kez eklenemez.
+* **Migration:** `sql/migrations/002_election_invitees.up.sql`
+
 ---
 
 ## 🔒 Kritik İş Mantığı (Business Logic) - AI Ajanları İçin Talimatlar
@@ -56,3 +65,4 @@ Hangi kullanıcının hangi seçimde oy kullandığını denetler. **Mükerrer o
 1. **Anonimlik Kuralı (Strict Anonymity):** Bir kullanıcı oy kullandığında, `ElectionVoters` tablosuna kullanıcının o seçimde oy kullandığına dair bir kayıt atılır. **Ancak**, kullanıcının kime oy verdiği ASLA kaydedilmez. Oy verme işlemi sadece ilgili adayın `Candidates` tablosundaki `voteCount` değerini `+1` artırır. Oyların şahıslarla eşleştirilebileceği hiçbir log veya tablo ilişkisi kurulmamalıdır.
 2. **Davet ve Katılım Akışı:** `Elections` oluşturulduğunda, odayı kuran kişi belirli kullanıcıları seçer. Sistem arka planda (Asynchronous / Goroutine ile) bu kişilere `inviteCode` ve `description` bilgilerini içeren bir SMTP e-postası gönderir.
 3. **Mükerrer Oy Kontrolü:** Oylama API uç noktası (Endpoint) çalıştırılmadan önce, isteği atan `userId`'nin ilgili `electionId` için `ElectionVoters` tablosunda kaydı olup olmadığı kontrol edilmelidir. Kayıt varsa işlem reddedilmelidir (Örn: HTTP 403 Forbidden).
+4. **Whitelist Erişim Kontrolü:** `GET /api/v1/elections/join/{inviteCode}` uç noktası çalıştırılmadan önce, isteği atan kullanıcının e-posta adresinin `ElectionInvitees` tablosunda kayıtlı olup olmadığı kontrol edilmelidir. Kayıt yoksa erişim reddedilmelidir (HTTP 403 Forbidden — "Bu odaya davet edilmediniz").
