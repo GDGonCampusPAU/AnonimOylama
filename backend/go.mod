@@ -8,3 +8,8 @@ require (
 	github.com/lib/pq v1.12.3
 	golang.org/x/crypto v0.50.0
 )
+
+require (
+	github.com/wneessen/go-mail v0.7.2 // indirect
+	golang.org/x/text v0.36.0 // indirect
+)

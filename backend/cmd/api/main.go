@@ -8,6 +8,7 @@ import (
 
 	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/config"
 	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/handlers"
+	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/mailer"
 	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/middleware"
 	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/repository"
 	"github.com/GDGonCampusPAU/AnonimOylama/backend/internal/service"
@@ -27,15 +28,23 @@ func main() {
 	authService := service.NewAuthService(userRepo, cfg.JWTSecret)
 	authHandler := handlers.NewAuthHandler(authService)
 
+	// Phase 3: Election DI zinciri
+	electionRepo := repository.NewElectionRepository(db)
+	mailClient := mailer.New(cfg)
+	electionService := service.NewElectionService(electionRepo, mailClient)
+	electionHandler := handlers.NewElectionHandler(electionService)
+
 	mux := http.NewServeMux()
 
 	// Public endpoints
 	mux.HandleFunc("GET /health", handlers.HealthCheck(db))
 	mux.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
 
-	// Protected endpoint örneği (Phase 3'te kullanılacak):
-	// mux.HandleFunc("GET /api/v1/elections", middleware.Auth(authService)(electionHandler.List))
-	_ = middleware.Auth
+	// Phase 3: Protected endpoints (Auth middleware arkasında)
+	mux.HandleFunc("POST /api/v1/elections",
+		middleware.Auth(authService)(electionHandler.Create))
+	mux.HandleFunc("GET /api/v1/elections/join/{inviteCode}",
+		middleware.Auth(authService)(electionHandler.JoinByInviteCode))
 
 	log.Printf("🚀 Anonim Oylama API sunucusu %s portunda başlatılıyor...", cfg.ServerPort)
 	if err := http.ListenAndServe(":"+cfg.ServerPort, mux); err != nil {
