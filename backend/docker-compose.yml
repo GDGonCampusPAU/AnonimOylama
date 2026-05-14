@@ -1,6 +1,5 @@
 # ====================================
 # Anonim Oylama - Docker Compose
-# PostgreSQL veritabanı servisi
 # ====================================
 # Kullanım:
 #   docker-compose up -d    → Servisleri başlat
@@ -25,6 +24,45 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  migrate:
+    image: migrate/migrate:latest
+    container_name: anonim_oylama_migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./sql/migrations:/migrations
+    command:
+      - -path=/migrations
+      - -database=postgres://postgres:postgres@postgres:5432/anonim_oylama?sslmode=disable
+      - up
+
+  backend:
+    build: .
+    container_name: anonim_oylama_api
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      - SERVER_PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=anonim_oylama
+      - DB_SSLMODE=disable
+      - JWT_SECRET=supersecretjwtkey
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=your-email@gmail.com
+      - SMTP_PASSWORD=your-app-password
+      - SMTP_FROM=noreply@anonimoylama.com
 
 volumes:
   postgres_data:

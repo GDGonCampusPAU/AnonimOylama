@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"strings"
@@ -14,12 +15,13 @@ import (
 
 // ElectionService, seçim odaları ile ilgili tüm iş mantığını kapsar.
 type ElectionService struct {
-	repo   *repository.ElectionRepository
-	mailer *mailer.Mailer
+	repo     *repository.ElectionRepository
+	voteRepo *repository.VoteRepository
+	mailer   *mailer.Mailer
 }
 
-func NewElectionService(repo *repository.ElectionRepository, m *mailer.Mailer) *ElectionService {
-	return &ElectionService{repo: repo, mailer: m}
+func NewElectionService(repo *repository.ElectionRepository, voteRepo *repository.VoteRepository, m *mailer.Mailer) *ElectionService {
+	return &ElectionService{repo: repo, voteRepo: voteRepo, mailer: m}
 }
 
 // generateInviteCode, kriptografik olarak güvenli 8 karakterlik benzersiz bir davet kodu üretir.
@@ -200,4 +202,144 @@ func (s *ElectionService) JoinByInviteCode(inviteCode, userEmail string) (*model
 		},
 		Candidates: candidateInfos,
 	}, nil
+}
+
+// GetElectionResults, durumu Completed olan bir seçimin sonuçlarını döner.
+func (s *ElectionService) GetElectionResults(ctx context.Context, electionID string) (*models.ElectionResultData, error) {
+	// 1. Seçimi ID ile getir
+	election, err := s.repo.GetByID(electionID)
+	if err != nil {
+		return nil, fmt.Errorf("seçim bulunamadı")
+	}
+
+	// 2. Durum kontrolü: Sadece "Completed" olan seçimlerin sonuçları gösterilir.
+	if election.Status != "Completed" {
+		return nil, fmt.Errorf("oylama henüz devam ediyor, sonuçlar gizli")
+	}
+
+	// 3. Toplam katılımcı sayısını al
+	totalVoters, err := s.voteRepo.GetTotalVoters(ctx, electionID)
+	if err != nil {
+		return nil, fmt.Errorf("katılımcı sayısı alınırken hata oluştu")
+	}
+
+	// 4. Adayları ve aldıkları oyları getir
+	candidates, err := s.repo.GetCandidatesByElectionID(electionID)
+	if err != nil {
+		return nil, fmt.Errorf("aday sonuçları alınırken hata oluştu")
+	}
+
+	// 5. Response DTO'yu doldur
+	results := make([]models.CandidateResult, len(candidates))
+	for i, c := range candidates {
+		results[i] = models.CandidateResult{
+			CandidateID: c.ID,
+			Name:        c.Name,
+			VoteCount:   c.VoteCount,
+		}
+	}
+
+	return &models.ElectionResultData{
+		TotalParticipants: totalVoters,
+		Results:           results,
+	}, nil
+}
+
+// GetMyElections, giriş yapan kullanıcının oluşturduğu seçimleri sayfalanmış döner.
+func (s *ElectionService) GetMyElections(creatorID, status string, page, limit int) (*models.PaginatedElections, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 50 {
+		limit = 10
+	}
+	elections, total, err := s.repo.GetByCreatorID(creatorID, status, page, limit)
+	if err != nil {
+		return nil, fmt.Errorf("seçimler listelenemedi: %w", err)
+	}
+	return buildPaginatedElections(elections, total, page, limit), nil
+}
+
+// GetInvitedElections, giriş yapan kullanıcının davet edildiği seçimleri sayfalanmış döner.
+func (s *ElectionService) GetInvitedElections(userEmail, status string, page, limit int) (*models.PaginatedElections, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 50 {
+		limit = 10
+	}
+	elections, total, err := s.repo.GetByInviteeEmail(userEmail, status, page, limit)
+	if err != nil {
+		return nil, fmt.Errorf("davetli seçimler listelenemedi: %w", err)
+	}
+	return buildPaginatedElections(elections, total, page, limit), nil
+}
+
+// Reinvite, bir seçimin tüm davetlilerine davet e-postasını yeniden gönderir.
+// Sadece seçimi oluşturan kişi bu işlemi yapabilir.
+// E-posta gönderimi arka planda (goroutine) gerçekleşir; endpoint hemen 200 döner.
+func (s *ElectionService) Reinvite(electionID, requesterID string) error {
+	election, err := s.repo.GetByID(electionID)
+	if err != nil {
+		return fmt.Errorf("seçim bulunamadı")
+	}
+	if election.CreatorID != requesterID {
+		return fmt.Errorf("bu işlem için yetkiniz yok")
+	}
+	if election.Status != "Active" {
+		return fmt.Errorf("sadece aktif seçimler için davet yenilenebilir")
+	}
+
+	emails, err := s.repo.GetInviteeEmails(electionID)
+	if err != nil {
+		return fmt.Errorf("davetli listesi alınamadı: %w", err)
+	}
+	if len(emails) == 0 {
+		return fmt.Errorf("bu seçime kayıtlı davetli bulunamadı")
+	}
+
+	// Arka planda gönder — bloklama yok
+	s.mailer.SendBulkInvitations(emails, election.Title, election.InviteCode, election.Description)
+	return nil
+}
+
+// buildPaginatedElections, election listesini pagination DTO'suna dönüştürür.
+func buildPaginatedElections(elections []models.ElectionListItem, total, page, limit int) *models.PaginatedElections {
+	totalPages := total / limit
+	if total%limit != 0 {
+		totalPages++
+	}
+	if totalPages < 1 {
+		totalPages = 1
+	}
+	if elections == nil {
+		elections = []models.ElectionListItem{}
+	}
+	return &models.PaginatedElections{
+		Elections:  elections,
+		Total:      total,
+		Page:       page,
+		Limit:      limit,
+		TotalPages: totalPages,
+	}
+}
+
+// CompleteElection, seçimin durumunu 'Completed' olarak günceller.
+// Sadece seçimi oluşturan kişi (creator) bu işlemi yapabilir.
+func (s *ElectionService) CompleteElection(ctx context.Context, electionID string, userID string) error {
+	election, err := s.repo.GetByID(electionID)
+	if err != nil {
+		return fmt.Errorf("seçim bulunamadı")
+	}
+
+	// Yetki kontrolü: Sadece oluşturan kişi kapatabilir
+	if election.CreatorID != userID {
+		return fmt.Errorf("bu seçimi sonlandırma yetkiniz yok")
+	}
+
+	if election.Status == "Completed" {
+		return fmt.Errorf("bu seçim zaten sonlandırılmış")
+	}
+
+	return s.repo.UpdateStatus(electionID, "Completed")
 }

@@ -23,6 +23,17 @@ type loginRequest struct {
 }
 
 // Login: POST /api/v1/auth/login
+// @Summary Kullanıcı Girişi
+// @Description Email ve şifre ile sisteme giriş yapıp JWT token alır.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body loginRequest true "Giriş Bilgileri"
+// @Success 200 {object} response.APIResponse "Giriş başarılı"
+// @Failure 400 {object} response.APIResponse "Geçersiz istek"
+// @Failure 401 {object} response.APIResponse "Hatalı şifre veya e-posta"
+// @Failure 403 {object} response.APIResponse "Hesap onaylanmamış"
+// @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
