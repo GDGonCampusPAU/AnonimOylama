@@ -73,3 +73,36 @@ type JoinElectionResponse struct {
 	Election   ElectionInfo    `json:"election"`
 	Candidates []CandidateInfo `json:"candidates"`
 }
+
+// ElectionListItem, seçim listelerinde her bir seçimi özetler.
+type ElectionListItem struct {
+	ID          string     `json:"id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Status      string     `json:"status"`
+	InviteCode  string     `json:"inviteCode"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	ExpiresAt   *time.Time `json:"expiresAt"`
+}
+
+// PaginatedElections, seçim listesi yanıtında sayfalama bilgisini taşır.
+type PaginatedElections struct {
+	Elections  []ElectionListItem `json:"elections"`
+	Total      int                `json:"total"`
+	Page       int                `json:"page"`
+	Limit      int                `json:"limit"`
+	TotalPages int                `json:"totalPages"`
+}
+
+// CandidateResult, GET /api/v1/elections/{electionId}/results yanıtında adayların oy sayılarını tutar.
+type CandidateResult struct {
+	CandidateID string `json:"candidateId"`
+	Name        string `json:"name"`
+	VoteCount   int    `json:"voteCount"`
+}
+
+// ElectionResultData, GET /api/v1/elections/{electionId}/results endpoint'inin data modelidir.
+type ElectionResultData struct {
+	TotalParticipants int               `json:"totalParticipants"`
+	Results           []CandidateResult `json:"results"`
+}

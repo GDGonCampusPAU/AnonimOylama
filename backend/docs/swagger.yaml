@@ -1,0 +1,607 @@
+basePath: /
+definitions:
+  handlers.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  models.CandidateInfo:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  models.CandidateResult:
+    properties:
+      candidateId:
+        type: string
+      name:
+        type: string
+      voteCount:
+        type: integer
+    type: object
+  models.CreateElectionRequest:
+    properties:
+      candidates:
+        description: Aday isimleri listesi
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      expiresAt:
+        description: RFC3339 formatında zaman damgası
+        type: string
+      invitedEmails:
+        description: Odaya davet edilecek e-posta adresleri (whitelist)
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    type: object
+  models.CreateElectionResponse:
+    properties:
+      electionId:
+        type: string
+      inviteCode:
+        type: string
+    type: object
+  models.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      role:
+        description: '"user" | "admin" — boş bırakılırsa "user" atanır'
+        type: string
+      surname:
+        type: string
+    type: object
+  models.ElectionInfo:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+  models.ElectionResultData:
+    properties:
+      results:
+        items:
+          $ref: '#/definitions/models.CandidateResult'
+        type: array
+      totalParticipants:
+        type: integer
+    type: object
+  models.JoinElectionResponse:
+    properties:
+      candidates:
+        items:
+          $ref: '#/definitions/models.CandidateInfo'
+        type: array
+      election:
+        $ref: '#/definitions/models.ElectionInfo'
+    type: object
+  models.VoteRequest:
+    properties:
+      candidateId:
+        description: Oy verilecek adayın ID'si
+        type: string
+    type: object
+  response.APIResponse:
+    properties:
+      data:
+        description: Yanıt verisi (başarılıysa dolu, hatalıysa null)
+      message:
+        description: Kullanıcıya gösterilecek mesaj
+        type: string
+      success:
+        description: İşlem başarılı mı?
+        type: boolean
+    type: object
+host: localhost:8081
+info:
+  contact:
+    email: iletisim@example.com
+    name: API Destek
+  description: Kapalı uçlu ve tam anonim oylama sistemi backend'i.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Anonim Oylama API
+  version: "1.0"
+paths:
+  /api/v1/admin/stats:
+    get:
+      description: Toplam kullanıcı, bekleyen kullanıcı, seçim ve oy istatistiklerini
+        döner.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Admin istatistiklerini getirir
+      tags:
+      - Admin
+  /api/v1/admin/users:
+    get:
+      description: Admin kullanıcıları sayfalı olarak listeler. pending=true ile sadece
+        onay bekleyenler döner.
+      parameters:
+      - default: 1
+        description: Sayfa
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Sadece onay bekleyenler
+        in: query
+        name: pending
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Kullanıcıları listeler
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Admin yeni kullanıcı oluşturur ve rol atar. Kullanıcı otomatik
+        onaylıdır.
+      parameters:
+      - description: Kullanıcı oluşturma isteği
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Admin kullanıcı oluşturur
+      tags:
+      - Admin
+  /api/v1/admin/users/{userId}/approve:
+    patch:
+      description: Admin bir kullanıcının isApproved alanını true yapar.
+      parameters:
+      - description: Kullanıcı ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Kullanıcı onaylar
+      tags:
+      - Admin
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Email ve şifre ile sisteme giriş yapıp JWT token alır.
+      parameters:
+      - description: Giriş Bilgileri
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Giriş başarılı
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Geçersiz istek
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Hatalı şifre veya e-posta
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Hesap onaylanmamış
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Kullanıcı Girişi
+      tags:
+      - Auth
+  /api/v1/elections:
+    post:
+      consumes:
+      - application/json
+      description: Yeni bir seçim odası oluşturur ve davetiyeleri arka planda e-posta
+        ile gönderir.
+      parameters:
+      - description: Seçim Bilgileri
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateElectionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Oylama oluşturuldu
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.CreateElectionResponse'
+              type: object
+        "400":
+          description: Geçersiz istek formatı
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Yetkisiz
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Yeni Oylama Oluştur
+      tags:
+      - Elections
+  /api/v1/elections/{electionId}/complete:
+    put:
+      description: Odayı kuran kişi (creator) tarafından seçimi manuel olarak bitirir.
+        Bu sayede sonuçlar görüntülenebilir hale gelir.
+      parameters:
+      - description: Seçim ID
+        in: path
+        name: electionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Seçim sonlandırıldı
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Eksik parametre
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Yetkisiz
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Yetki yok
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Seçim bulunamadı
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Seçimi Sonlandır
+      tags:
+      - Elections
+  /api/v1/elections/{electionId}/reinvite:
+    post:
+      description: Seçimin tüm davetlilerine e-postayı yeniden gönderir. Sadece seçimi
+        oluşturan kullanıcı çalıştırabilir.
+      parameters:
+      - description: Seçim ID
+        in: path
+        name: electionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Davetiyeleri yeniden gönderir
+      tags:
+      - Elections
+  /api/v1/elections/{electionId}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Kullanıcının anonim olarak oy kullanmasını sağlar. Kullanıcının
+        kime oy verdiği ASLA kaydedilmez.
+      parameters:
+      - description: Seçim ID
+        in: path
+        name: electionId
+        required: true
+        type: string
+      - description: Aday ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.VoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Oy kaydedildi
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Geçersiz istek
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Yetkisiz
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Zaten oy kullanıldı
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Oy Kullan
+      tags:
+      - Voting
+  /api/v1/elections/invited:
+    get:
+      description: Giriş yapan kullanıcının e-posta adresiyle davet edildiği seçimleri
+        sayfalı listeler.
+      parameters:
+      - default: 1
+        description: Sayfa
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: 'Durum filtresi: Active veya Completed'
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Davet edildiğim seçimleri listeler
+      tags:
+      - Elections
+  /api/v1/elections/join/{inviteCode}:
+    get:
+      description: Davet koduyla odanın bilgilerini ve aday listesini döner. Sadece
+        davetliler (whitelist) katılabilir.
+      parameters:
+      - description: Davet Kodu
+        in: path
+        name: inviteCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Oda bilgileri getirildi
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.JoinElectionResponse'
+              type: object
+        "400":
+          description: Eksik parametre
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Yetkisiz
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Erişim reddedildi
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Seçim bulunamadı
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Odaya Katıl
+      tags:
+      - Elections
+  /api/v1/elections/my:
+    get:
+      description: Giriş yapan kullanıcının oluşturduğu seçimleri sayfalı listeler.
+      parameters:
+      - default: 1
+        description: Sayfa
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: 'Durum filtresi: Active veya Completed'
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Oluşturduğum seçimleri listeler
+      tags:
+      - Elections
+  /api/v1/elections/results/{electionId}:
+    get:
+      description: 'Tamamlanmış (status: Completed) bir seçimin sonuçlarını döner.'
+      parameters:
+      - description: Seçim ID
+        in: path
+        name: electionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sonuçlar listelendi
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ElectionResultData'
+              type: object
+        "400":
+          description: Eksik parametre
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Yetkisiz
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Oylama devam ediyor
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Seçim bulunamadı
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Sonuçları Getir
+      tags:
+      - Elections
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
